@@ -1,17 +1,18 @@
-var cssPropNamePrefixes = ['O', 'MS', 'Moz', 'Webkit'];
+const cssPropNamePrefixes = ['O', 'MS', 'Moz', 'Webkit'];
 
-function getCSSPropertyName(cssDefaultPropName) {
-  var cssPropNameSuffix = '';
-  var propNameParts = cssDefaultPropName.split('-');
-  for(var i = 0, l = propNameParts.length; i< l; i++) {
+export function getCSSPropertyName(cssDefaultPropName) {
+	let cssPropNameSuffix = '';
+	const propNameParts = cssDefaultPropName.split('-');
+	for(let i = 0, l = propNameParts.length; i< l; i++) {
     cssPropNameSuffix += propNameParts[i].charAt(0).toUpperCase() + propNameParts[i].slice(1);
   }
 
-  var el = document.createElement('div');
-  var style = el.style;
-  for (var i = 0, l = cssPropNamePrefixes.length; i < l; i++) {
-    var cssPrefixedPropName = cssPropNamePrefixes[i] + cssPropNameSuffix;
-    if( style[ cssPrefixedPropName ] !== undefined ) {
+	const el = document.createElement('div');
+	const style = el.style;
+	let i = 0, l = cssPropNamePrefixes.length;
+	for (; i < l; i++) {
+		const cssPrefixedPropName = cssPropNamePrefixes[i] + cssPropNameSuffix;
+		if( style[ cssPrefixedPropName ] !== undefined ) {
       return cssPrefixedPropName;
     }
   }

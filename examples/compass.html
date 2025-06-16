@@ -1,81 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 
 	<title>FULLTILT compass demo</title>
+	<style>
 
-	<!-- DEVICEORIENTATION EMULATOR DETECTION + BOOTSTRAP -->
-	<script src="https://richtr.github.io/doe/doe.js"></script>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+	</style>
+	<link rel="stylesheet" href="./resources/css/header.css">
 
-	<script src="../dist/fulltilt.min.js" type="text/javascript"></script>
 </head>
 <body>
 
-	<h1>FULLTILT compass demo</h1>
+	<div id="buttons">
+		<button type="button" id="startButton" class="my-button">Start</button>
+	</div>
 
 	<canvas id="arrow"></canvas>
 
-	<script>
+	<script type="module">
+		import {getDeviceOrientation} from "../dist/fulltilt.min.js";
 
-		var arrowWidth = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
-		var halfArrowWidth = arrowWidth / 2;
+		let arrowSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
+		let halfArrowWidth = arrowSize / 2;
 
-		var arrow = document.getElementById('arrow');
-		var ctx = arrow.getContext('2d');
+		const arrow = document.getElementById('arrow');
+		const ctx = arrow.getContext('2d');
 
 		// Set initial canvas width/height
-		arrow.width = arrowWidth;
-		arrow.height = arrowWidth;
+		arrow.width = arrowSize;
+		arrow.height = arrowSize;
 
-		// Start the FULLTILT DeviceOrientation listeners and update true north
-		// bearing indicator whenever a new deviceorientation event is fired.
-		var promise = FULLTILT.getDeviceOrientation({'type': 'world'});
-		promise.then(function(orientationControl) {
+		const startButton = document.querySelector('#startButton');
+		let orientationControl;
 
-			orientationControl.listen(function() {
+		const start = async () => {
+			if (!orientationControl) {
+				orientationControl = await getDeviceOrientation({'type': 'world'});
+			}
+			startButton.innerText = 'Stop';
+			startButton.removeEventListener('click', start);
+			startButton.addEventListener('click', stop, false);
+
+			orientationControl.listen(function () {
 
 				// Get latest screen-adjusted deviceorientation data
-				var screenAdjustedEvent = orientationControl.getScreenAdjustedEuler();
+				const screenAdjustedEuler = orientationControl.getScreenAdjustedEuler();
 
-				ctx.clearRect(0,0,arrowWidth,arrowWidth);
+				ctx.clearRect(0, 0, arrowSize, arrowSize);
 
 				// Convert true north heading to radians
-				var heading = screenAdjustedEvent.alpha * Math.PI / 180;
+				const heading = screenAdjustedEuler.alpha * Math.PI / 180;
 
-				var x1 = halfArrowWidth + Math.round(halfArrowWidth * Math.sin(heading));
-				var y1 = halfArrowWidth - Math.round(halfArrowWidth * Math.cos(heading));
-				var x2 = halfArrowWidth + Math.round(10.0 * Math.sin(heading - Math.PI/2));
-				var y2 = halfArrowWidth - Math.round(10.0 * Math.cos(heading - Math.PI/2));
-				var x3 = halfArrowWidth + Math.round(10.0 * Math.sin(heading + Math.PI/2));
-				var y3 = halfArrowWidth - Math.round(10.0 * Math.cos(heading + Math.PI/2));
+				const x1 = halfArrowWidth + Math.round(halfArrowWidth * Math.sin(heading));
+				const y1 = halfArrowWidth - Math.round(halfArrowWidth * Math.cos(heading));
+				const x2 = halfArrowWidth + Math.round(10.0 * Math.sin(heading - Math.PI / 2));
+				const y2 = halfArrowWidth - Math.round(10.0 * Math.cos(heading - Math.PI / 2));
+				const x3 = halfArrowWidth + Math.round(10.0 * Math.sin(heading + Math.PI / 2));
+				const y3 = halfArrowWidth - Math.round(10.0 * Math.cos(heading + Math.PI / 2));
 
 				ctx.beginPath();
-				ctx.moveTo(x1,y1);
-				ctx.lineTo(x2,y2);
-				ctx.lineTo(x3,y3);
+				ctx.moveTo(x1, y1);
+				ctx.lineTo(x2, y2);
+				ctx.lineTo(x3, y3);
 				ctx.closePath();
 				ctx.fill();
-
 			});
+		}
 
-		});
+		const stop = async () => {
+			orientationControl?.stop();
+			startButton.innerText = 'Start';
+			startButton.removeEventListener('click', stop);
+			startButton.addEventListener('click', start, false);
+		}
 
-		window.addEventListener('resize', function() {
-			arrowWidth = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight
+		startButton.addEventListener('click', start, false);
 
-			halfArrowWidth = arrowWidth / 2;
+		window.addEventListener('resize', function () {
+			arrowSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight
 
-			arrow.width = arrowWidth;
-			arrow.height = arrowWidth;
+			halfArrowWidth = arrowSize / 2;
+
+			arrow.width = arrowSize;
+			arrow.height = arrowSize;
 
 		}, false);
 
 	</script>
-
-	<!-- Github Banner -->
-	<a href="https://github.com/richtr/Full-Tilt"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
-
 </body>
 </html>
