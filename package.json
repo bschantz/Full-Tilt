@@ -27,9 +27,9 @@
 		"tait bryan",
 		"angles"
 	],
-	"main": "dist/full-tilt.min.js",
-	"module": "dist/full-tilt.min.js",
-	"types": "dist/full-tilt.d.ts",
+	"main": "dist/fulltilt.min.js",
+	"module": "dist/fulltilt.min.js",
+	"types": "dist/fulltilt.d.ts",
 	"files": [
 		"dist/"
 	],
