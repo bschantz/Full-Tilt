@@ -1,4 +1,4 @@
-export {getDeviceOrientation, getDeviceMotion} from './Core';
+export {getDeviceOrientation, getDeviceMotion, requestPermission} from './Core';
 export * from './DeviceMotion';
 export * from './DeviceOrientation';
 export * from './Euler';

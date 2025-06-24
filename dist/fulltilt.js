@@ -66,31 +66,15 @@ class State {
     }
 }
 
-/** @internal */
-class PermissionManager {
-    static async request(type) {
-        try {
-            if (type === 'orientation' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                return await DeviceOrientationEvent.requestPermission();
-            }
-            if (type === 'motion' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                return await DeviceMotionEvent.requestPermission();
-            }
-        }
-        catch (error) {
-            console.error('FullTilt: Permission request failed', error);
-            return 'denied';
-        }
-        return 'granted';
-    }
-}
-
 async function getDeviceOrientation(options) {
     const state = State.instance;
-    const permission = await PermissionManager.request('orientation');
-    if (permission !== 'granted') {
-        throw new Error('Access to device orientation sensors denied');
-    }
+    // const permission = await requestPermission('orientation');
+    // if (permission.orientation == 'denied') {
+    // 	throw new Error('Access to device orientation sensors denied');
+    // }
+    // if (permission.orientation == 'prompt') {
+    // 	return permission;
+    // }
     const control = new DeviceOrientation(options);
     control.start();
     try {
@@ -105,10 +89,11 @@ async function getDeviceOrientation(options) {
 }
 async function getDeviceMotion() {
     const state = State.instance;
-    const permission = await PermissionManager.request('motion');
-    if (permission !== 'granted') {
-        throw new Error('Access to device motion sensors denied');
-    }
+    // const permission = await requestPermission('motion');
+    // if (permission.motion !== 'granted') {
+    // 	throw new Error('Access to device motion sensors denied');
+    // }
+    //
     const control = new DeviceMotion();
     control.start();
     try {
@@ -120,6 +105,42 @@ async function getDeviceMotion() {
         return null;
     }
     return control;
+}
+async function requestPermission(type) {
+    const deviceState = {};
+    try {
+        if (!type || type === 'orientation') {
+            if (typeof DeviceOrientationEvent.requestPermission !== 'function') {
+                deviceState.orientation = 'granted';
+            }
+            else {
+                deviceState.orientation = await DeviceOrientationEvent.requestPermission();
+            }
+        }
+    }
+    catch (e) {
+        const err = e;
+        if (err.name === 'NotAllowedError') {
+            deviceState.orientation = 'prompt';
+        }
+    }
+    try {
+        if ((!type || type === 'motion') && typeof DeviceMotionEvent.requestPermission === 'function') {
+            if (typeof DeviceMotionEvent.requestPermission !== 'function') {
+                deviceState.motion = 'granted';
+            }
+            else {
+                deviceState.motion = await DeviceMotionEvent.requestPermission();
+            }
+        }
+    }
+    catch (e) {
+        const err = e;
+        if (err.name === 'NotAllowedError') {
+            deviceState.motion = 'prompt';
+        }
+    }
+    return deviceState;
 }
 /** @internal */
 async function sensorCheck(sensorRootObj) {
@@ -318,22 +339,8 @@ class DeviceOrientation {
         this.start(callback);
     }
     getFixedFrameQuaternion() {
-        const euler = new Euler();
-        const matrix = new RotationMatrix();
         const quaternion = new Quaternion();
-        const orientationData = this.state.sensors.orientation.data || { alpha: 0, beta: 0, gamma: 0 };
-        let adjustedAlpha = orientationData.alpha;
-        if (this.alphaOffsetDevice) {
-            matrix.setFromEuler(this.alphaOffsetDevice);
-            matrix.rotateZ(-this.alphaOffsetScreen);
-            euler.setFromRotationMatrix(matrix);
-            if (euler.alpha < 0) {
-                euler.alpha += 360;
-            }
-            euler.alpha %= 360;
-            adjustedAlpha -= euler.alpha;
-        }
-        euler.set(adjustedAlpha, orientationData.beta, orientationData.gamma);
+        const euler = this.getFixedFrameEuler();
         quaternion.setFromEuler(euler);
         return quaternion;
     }
@@ -344,21 +351,8 @@ class DeviceOrientation {
         return quaternion;
     }
     getFixedFrameMatrix() {
-        const euler = new Euler();
+        const euler = this.getFixedFrameEuler();
         const matrix = new RotationMatrix();
-        const orientationData = this.state.sensors.orientation.data || { alpha: 0, beta: 0, gamma: 0 };
-        let adjustedAlpha = orientationData.alpha;
-        if (this.alphaOffsetDevice) {
-            matrix.setFromEuler(this.alphaOffsetDevice);
-            matrix.rotateZ(-this.alphaOffsetScreen);
-            euler.setFromRotationMatrix(matrix);
-            if (euler.alpha < 0) {
-                euler.alpha += 360;
-            }
-            euler.alpha %= 360;
-            adjustedAlpha -= euler.alpha;
-        }
-        euler.set(adjustedAlpha, orientationData.beta, orientationData.gamma);
         matrix.setFromEuler(euler);
         return matrix;
     }
@@ -370,9 +364,20 @@ class DeviceOrientation {
     }
     getFixedFrameEuler() {
         const euler = new Euler();
-        const matrix = this.getFixedFrameMatrix();
-        euler.setFromRotationMatrix(matrix);
-        return euler;
+        const matrix = new RotationMatrix();
+        const orientationData = this.state.sensors.orientation.data || { alpha: 0, beta: 0, gamma: 0 };
+        let adjustedAlpha = orientationData.alpha;
+        if (this.alphaOffsetDevice) {
+            matrix.setFromEuler(this.alphaOffsetDevice);
+            matrix.rotateZ(-this.alphaOffsetScreen);
+            euler.setFromRotationMatrix(matrix);
+            if (euler.alpha < 0) {
+                euler.alpha += 360;
+            }
+            euler.alpha %= 360;
+            adjustedAlpha -= euler.alpha;
+        }
+        return euler.set(adjustedAlpha, orientationData.beta, orientationData.gamma);
     }
     getScreenAdjustedEuler() {
         const euler = new Euler();
@@ -805,4 +810,4 @@ class RotationMatrix {
     ;
 }
 
-export { DeviceMotion, DeviceOrientation, Euler, Quaternion, RotationMatrix, getDeviceMotion, getDeviceOrientation };
+export { DeviceMotion, DeviceOrientation, Euler, Quaternion, RotationMatrix, getDeviceMotion, getDeviceOrientation, requestPermission };

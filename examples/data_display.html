@@ -39,190 +39,13 @@
 			background-color: lightyellow;
 		}
 	</style>
-	<link rel="stylesheet" href="./resources/css/header.css">
+	<link rel="stylesheet" href="resources/css/common.css">
 
 </head>
 
 <body>
 
-<div id="buttons">
-	<button type="button" id="startOrientationButton" class="my-button">Start Orientation</button>
-	<button type="button" id="startMotionButton" class="my-button">Start Motion</button>
-</div>
-
 <h1>FULLTILT vs Raw DeviceOrientation Event Data Display</h1>
-
-<script type="module">
-	import { getDeviceMotion, getDeviceOrientation } from "../dist/fulltilt.min.js";
-
-	function printDataValue(input) {
-		if (input === undefined)
-			return "undefined";
-		if (input === null)
-			return "null";
-		if (input === true)
-			return "true";
-		if (input === false)
-			return "false";
-		if (Object.prototype.toString.call(input) === "[object Number]")
-			return Math.round((input + 0.00001) * 100) / 100; // return to 2 decimal places
-
-		return (input + ""); // force stringify
-	}
-
-	function init() {
-
-		const alpha = document.getElementById("alpha");
-		const beta = document.getElementById("beta");
-		const gamma = document.getElementById("gamma");
-
-		const screenAlpha = document.getElementById("screenAlpha");
-		const screenBeta = document.getElementById("screenBeta");
-		const screenGamma = document.getElementById("screenGamma");
-
-		const absolute = document.getElementById("absolute");
-
-		const webkitCompassHeading = document.getElementById("webkitCompassHeading");
-		const webkitCompassAccuracy = document.getElementById("webkitCompassAccuracy");
-
-		const startOrientationButton = document.querySelector('#startOrientationButton');
-		let orientationControl;
-		// Start FULLTILT DeviceOrientation listeners and register our callback
-
-		const startOrientation = async() => {
-			if (!orientationControl) {
-				orientationControl = await getDeviceOrientation({'type': 'world'});
-			}
-			startOrientationButton.innerText = 'Stop Orientation';
-			startOrientationButton.removeEventListener('click', startOrientation);
-			startOrientationButton.addEventListener('click', stopOrientation, false);
-
-			orientationControl.listen(function () {
-
-				// Display calculated screen-adjusted deviceorientation
-
-				const screenAdjustedEvent = orientationControl.getFixedFrameEuler();
-
-				screenAlpha.textContent = printDataValue(screenAdjustedEvent.alpha);
-				screenBeta.textContent = printDataValue(screenAdjustedEvent.beta);
-				screenGamma.textContent = printDataValue(screenAdjustedEvent.gamma);
-
-				// Display raw deviceorientation data
-
-				const rawEvent = orientationControl.getLastRawEventData();
-
-				alpha.textContent = printDataValue(rawEvent.alpha);
-				beta.textContent = printDataValue(rawEvent.beta);
-				gamma.textContent = printDataValue(rawEvent.gamma);
-
-				absolute.textContent = printDataValue(rawEvent.absolute);
-
-				webkitCompassHeading.textContent = printDataValue(rawEvent.webkitCompassHeading);
-				webkitCompassAccuracy.textContent = printDataValue(rawEvent.webkitCompassAccuracy);
-
-			});
-
-		}
-		const stopOrientation = () => {
-			orientationControl?.stop();
-			startOrientationButton.innerText = 'Start Orientation';
-			startOrientationButton.removeEventListener('click', stopOrientation);
-			startOrientationButton.addEventListener('click', startOrientation, false);
-		}
-
-		startOrientationButton.addEventListener('click', startOrientation, false);
-
-		const accX = document.getElementById("accX");
-		const accY = document.getElementById("accY");
-		const accZ = document.getElementById("accZ");
-
-		const screenAccX = document.getElementById("screenAccX");
-		const screenAccY = document.getElementById("screenAccY");
-		const screenAccZ = document.getElementById("screenAccZ");
-
-		const accGX = document.getElementById("accGX");
-		const accGY = document.getElementById("accGY");
-		const accGZ = document.getElementById("accGZ");
-
-		const screenAccGX = document.getElementById("screenAccGX");
-		const screenAccGY = document.getElementById("screenAccGY");
-		const screenAccGZ = document.getElementById("screenAccGZ");
-
-		const rotRateAlpha = document.getElementById("rotRateAlpha");
-		const rotRateBeta = document.getElementById("rotRateBeta");
-		const rotRateGamma = document.getElementById("rotRateGamma");
-
-		const screenRotRateAlpha = document.getElementById("screenRotRateAlpha");
-		const screenRotRateBeta = document.getElementById("screenRotRateBeta");
-		const screenRotRateGamma = document.getElementById("screenRotRateGamma");
-
-		const startMotionButton = document.getElementById("startMotionButton");
-		let motionControl;
-
-		const startMotion = async () => {
-			if (!motionControl) {
-				motionControl = await getDeviceMotion();
-			}
-			startMotionButton.innerText = 'Stop Motion';
-			startMotionButton.removeEventListener('click', startMotion);
-			startMotionButton.addEventListener('click', stopMotion, false);
-
-			motionControl.listen(function () {
-
-				// Display calculated screen-adjusted devicemotion
-
-				const screenAcc = motionControl.getScreenAdjustedAcceleration() || {};
-				const screenAccG = motionControl.getScreenAdjustedAccelerationIncludingGravity() || {};
-				const screenRotRate = motionControl.getScreenAdjustedRotationRate() || {};
-
-				screenAccX.textContent = printDataValue(screenAcc.x);
-				screenAccY.textContent = printDataValue(screenAcc.y);
-				screenAccZ.textContent = printDataValue(screenAcc.z);
-
-				screenAccGX.textContent = printDataValue(screenAccG.x);
-				screenAccGY.textContent = printDataValue(screenAccG.y);
-				screenAccGZ.textContent = printDataValue(screenAccG.z);
-
-				screenRotRateAlpha.textContent = printDataValue(screenRotRate.alpha);
-				screenRotRateBeta.textContent = printDataValue(screenRotRate.beta);
-				screenRotRateGamma.textContent = printDataValue(screenRotRate.gamma);
-
-				// Display raw devicemotion data
-
-				const rawEvent = motionControl.getLastRawEventData();
-
-				const acc = rawEvent.acceleration || {};
-				const accG = rawEvent.accelerationIncludingGravity || {};
-				const rotRate = rawEvent.rotationRate || {};
-
-				accX.textContent = printDataValue(acc.x);
-				accY.textContent = printDataValue(acc.y);
-				accZ.textContent = printDataValue(acc.z);
-
-				accGX.textContent = printDataValue(accG.x);
-				accGY.textContent = printDataValue(accG.y);
-				accGZ.textContent = printDataValue(accG.z);
-
-				rotRateAlpha.textContent = printDataValue(rotRate.alpha);
-				rotRateBeta.textContent = printDataValue(rotRate.beta);
-				rotRateGamma.textContent = printDataValue(rotRate.gamma);
-
-			});
-		}
-
-		const stopMotion = () => {
-			motionControl?.stop();
-			startMotionButton.innerText = 'Start Motion';
-			startMotionButton.removeEventListener('click', stopMotion);
-			startMotionButton.addEventListener('click', startMotion, false);
-		}
-
-		startMotionButton.addEventListener('click', startMotion, false);
-	}
-
-	window.onload = init;
-
-</script>
 
 <h3>Screen-Adjusted DeviceOrientation</h3>
 
@@ -411,6 +234,171 @@
 </div>
 
 <p><em>Data values, where provided, are rounded to two decimal places for readability.</em></p>
+
+<dialog id="permission">
+	<div class="dialog-text">
+		This device requires the user to explicitly grant permission to use the orientation and motion sensors.
+		Press the 'Request Permission' button to initiate the permission request.
+	</div>
+	<div class="dialog-buttons">
+		<button type="button" id="request">Request Permission</button>
+		<button type="button" id="cancel">Cancel</button>
+	</div>
+</dialog>
+
+<script type="module">
+	import { getDeviceMotion, getDeviceOrientation } from "../dist/fulltilt.min.js";
+	import { getPermissions } from "./resources/js/permissions.js";
+
+	function printDataValue(input) {
+		if (input === undefined)
+			return "undefined";
+		if (input === null)
+			return "null";
+		if (input === true)
+			return "true";
+		if (input === false)
+			return "false";
+		if (Object.prototype.toString.call(input) === "[object Number]")
+			return Math.round((input + 0.00001) * 100) / 100; // return to 2 decimal places
+
+		return (input + ""); // force stringify
+	}
+
+	async function init() {
+
+		if (await getPermissions()) {
+			await startOrientation();
+			await startMotion();
+		}
+
+		const alpha = document.getElementById("alpha");
+		const beta = document.getElementById("beta");
+		const gamma = document.getElementById("gamma");
+
+		const screenAlpha = document.getElementById("screenAlpha");
+		const screenBeta = document.getElementById("screenBeta");
+		const screenGamma = document.getElementById("screenGamma");
+
+		const absolute = document.getElementById("absolute");
+
+		const webkitCompassHeading = document.getElementById("webkitCompassHeading");
+		const webkitCompassAccuracy = document.getElementById("webkitCompassAccuracy");
+
+		// Start FULLTILT DeviceOrientation listeners and register our callback
+
+		async function startOrientation() {
+			let orientationControl;
+			if (!orientationControl) {
+				orientationControl = await getDeviceOrientation({'type': 'world'});
+			}
+
+			orientationControl.listen(function () {
+
+				// Display calculated screen-adjusted deviceorientation
+
+				const screenAdjustedEvent = orientationControl.getFixedFrameEuler();
+
+				screenAlpha.textContent = printDataValue(screenAdjustedEvent.alpha);
+				screenBeta.textContent = printDataValue(screenAdjustedEvent.beta);
+				screenGamma.textContent = printDataValue(screenAdjustedEvent.gamma);
+
+				// Display raw deviceorientation data
+
+				const rawEvent = orientationControl.getLastRawEventData();
+
+				alpha.textContent = printDataValue(rawEvent.alpha);
+				beta.textContent = printDataValue(rawEvent.beta);
+				gamma.textContent = printDataValue(rawEvent.gamma);
+
+				absolute.textContent = printDataValue(rawEvent.absolute);
+
+				webkitCompassHeading.textContent = printDataValue(rawEvent.webkitCompassHeading);
+				webkitCompassAccuracy.textContent = printDataValue(rawEvent.webkitCompassAccuracy);
+
+			});
+
+		}
+
+		const accX = document.getElementById("accX");
+		const accY = document.getElementById("accY");
+		const accZ = document.getElementById("accZ");
+
+		const screenAccX = document.getElementById("screenAccX");
+		const screenAccY = document.getElementById("screenAccY");
+		const screenAccZ = document.getElementById("screenAccZ");
+
+		const accGX = document.getElementById("accGX");
+		const accGY = document.getElementById("accGY");
+		const accGZ = document.getElementById("accGZ");
+
+		const screenAccGX = document.getElementById("screenAccGX");
+		const screenAccGY = document.getElementById("screenAccGY");
+		const screenAccGZ = document.getElementById("screenAccGZ");
+
+		const rotRateAlpha = document.getElementById("rotRateAlpha");
+		const rotRateBeta = document.getElementById("rotRateBeta");
+		const rotRateGamma = document.getElementById("rotRateGamma");
+
+		const screenRotRateAlpha = document.getElementById("screenRotRateAlpha");
+		const screenRotRateBeta = document.getElementById("screenRotRateBeta");
+		const screenRotRateGamma = document.getElementById("screenRotRateGamma");
+
+
+		async function startMotion() {
+			let motionControl;
+			if (!motionControl) {
+				motionControl = await getDeviceMotion();
+			}
+
+			motionControl.listen(function () {
+
+				// Display calculated screen-adjusted devicemotion
+
+				const screenAcc = motionControl.getScreenAdjustedAcceleration() || {};
+				const screenAccG = motionControl.getScreenAdjustedAccelerationIncludingGravity() || {};
+				const screenRotRate = motionControl.getScreenAdjustedRotationRate() || {};
+
+				screenAccX.textContent = printDataValue(screenAcc.x);
+				screenAccY.textContent = printDataValue(screenAcc.y);
+				screenAccZ.textContent = printDataValue(screenAcc.z);
+
+				screenAccGX.textContent = printDataValue(screenAccG.x);
+				screenAccGY.textContent = printDataValue(screenAccG.y);
+				screenAccGZ.textContent = printDataValue(screenAccG.z);
+
+				screenRotRateAlpha.textContent = printDataValue(screenRotRate.alpha);
+				screenRotRateBeta.textContent = printDataValue(screenRotRate.beta);
+				screenRotRateGamma.textContent = printDataValue(screenRotRate.gamma);
+
+				// Display raw devicemotion data
+
+				const rawEvent = motionControl.getLastRawEventData();
+
+				const acc = rawEvent.acceleration || {};
+				const accG = rawEvent.accelerationIncludingGravity || {};
+				const rotRate = rawEvent.rotationRate || {};
+
+				accX.textContent = printDataValue(acc.x);
+				accY.textContent = printDataValue(acc.y);
+				accZ.textContent = printDataValue(acc.z);
+
+				accGX.textContent = printDataValue(accG.x);
+				accGY.textContent = printDataValue(accG.y);
+				accGZ.textContent = printDataValue(accG.z);
+
+				rotRateAlpha.textContent = printDataValue(rotRate.alpha);
+				rotRateBeta.textContent = printDataValue(rotRate.beta);
+				rotRateGamma.textContent = printDataValue(rotRate.gamma);
+
+			});
+		}
+	}
+
+	window.onload = init;
+
+</script>
+
 
 </body>
 </html>

@@ -37,4 +37,7 @@ export interface ScreenRotation {
 
 export type SensorCallback = () => void;
 
-export type PermissionState = 'granted'|'denied';
+export interface DevicePermissionState {
+	orientation?: PermissionState;
+	motion?: PermissionState;
+}

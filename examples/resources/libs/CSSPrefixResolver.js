@@ -1,6 +1,6 @@
 const cssPropNamePrefixes = ['O', 'MS', 'Moz', 'Webkit'];
 
-export function getCSSPropertyName(cssDefaultPropName) {
+function getCSSPropertyName(cssDefaultPropName) {
 	let cssPropNameSuffix = '';
 	const propNameParts = cssDefaultPropName.split('-');
 	for(let i = 0, l = propNameParts.length; i< l; i++) {

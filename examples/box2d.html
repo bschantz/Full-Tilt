@@ -30,24 +30,41 @@
 		}
 	</style>
 
-	<link rel="stylesheet" href="./resources/css/header.css">
+	<link rel="stylesheet" href="./resources/css/common.css" />
 
 </head>
 <body>
 
 <div id="buttons">
-	<button type="button" id="startButton" class="my-button">Start</button>
-	<button type="button" id="controllerType" class="my-button">FULLTILT DeviceOrientation</button>
+	<button type="button" id="controllerType" class="my-button">FullTilt DeviceOrientation</button>
 </div>
 
 <div id="container">
 	<div id="floatingBox"></div>
 </div>
 
-<script type="module">
-	import {getDeviceOrientation} from "../dist/fulltilt.min.js";
+<dialog id="permission">
+	<div class="dialog-text">
+		This device requires the user to explicitly grant permission to use the orientation sensors.
+		Press the 'Request Permission' button to initiate the permission request.
+	</div>
+	<div class="dialog-buttons">
+		<button type="button" id="request">Request Permission</button>
+		<button type="button" id="cancel">Cancel</button>
+	</div>
+</dialog>
 
-	window.onload = function () {
+<script type="module">
+	import {getDeviceOrientation} from "../dist/fulltilt.js";
+	import {getPermissions} from './resources/js/permissions.js';
+
+	window.onload = async function () {
+
+		if (await getPermissions('orientation')) {
+			await start();
+		} else {
+			return;
+		}
 		const TILT_LIMIT = 30;
 
 		let screenWidth = window.innerWidth;
@@ -79,7 +96,7 @@
 
 		let initialBeta;
 
-		const controlTypes = ['FULLTILT DeviceOrientation', 'Raw DeviceOrientation'];
+		const controlTypes = ['FullTilt DeviceOrientation', 'Raw DeviceOrientation'];
 		let currentControlType = 0;
 
 		// Allow switching between 'FULLTILT' and 'Raw DeviceOrientation' data sources
@@ -100,17 +117,13 @@
 		}, false);
 
 		const transformCSSPropName = getCSSPropertyName('transform');
-		const startButton = document.querySelector('#startButton');
 
-		let orientationControl;
+		async function start() {
+			let orientationControl;
 
-		const start = async () => {
 			if (!orientationControl) {
 				orientationControl = await getDeviceOrientation({'type': 'game'});
 			}
-			startButton.innerText = 'Stop';
-			startButton.removeEventListener('click', start);
-			startButton.addEventListener('click', stop, false);
 
 			orientationControl.listen(function () {
 				let euler;
@@ -160,14 +173,7 @@
 			});
 		}
 
-		const stop = async () => {
-			orientationControl?.stop();
-			startButton.innerText = 'Start';
-			startButton.removeEventListener('click', stop);
-			startButton.addEventListener('click', start, false);
-		}
 
-		startButton.addEventListener('click', start, false);
 
 		window.addEventListener('resize', function () {
 

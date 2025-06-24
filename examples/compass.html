@@ -12,19 +12,27 @@
 			margin: 0;
 		}
 	</style>
-	<link rel="stylesheet" href="./resources/css/header.css">
+	<link rel="stylesheet" href="resources/css/common.css">
 
 </head>
 <body>
 
-	<div id="buttons">
-		<button type="button" id="startButton" class="my-button">Start</button>
-	</div>
-
 	<canvas id="arrow"></canvas>
+
+	<dialog id="permission">
+		<div class="dialog-text">
+			This device requires the user to explicitly grant permission to use the orientation sensors.
+			Press the 'Request Permission' button to initiate the permission request.
+		</div>
+		<div class="dialog-buttons">
+			<button type="button" id="request">Request Permission</button>
+			<button type="button" id="cancel">Cancel</button>
+		</div>
+	</dialog>
 
 	<script type="module">
 		import {getDeviceOrientation} from "../dist/fulltilt.min.js";
+		import {getPermissions} from "./resources/js/permissions.js";
 
 		let arrowSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
 		let halfArrowWidth = arrowSize / 2;
@@ -36,16 +44,18 @@
 		arrow.width = arrowSize;
 		arrow.height = arrowSize;
 
-		const startButton = document.querySelector('#startButton');
-		let orientationControl;
 
-		const start = async () => {
+
+		if (await getPermissions('orientation')) {
+			await start();
+		}
+
+
+		async function start() {
+			let orientationControl;
 			if (!orientationControl) {
 				orientationControl = await getDeviceOrientation({'type': 'world'});
 			}
-			startButton.innerText = 'Stop';
-			startButton.removeEventListener('click', start);
-			startButton.addEventListener('click', stop, false);
 
 			orientationControl.listen(function () {
 
@@ -72,15 +82,6 @@
 				ctx.fill();
 			});
 		}
-
-		const stop = async () => {
-			orientationControl?.stop();
-			startButton.innerText = 'Start';
-			startButton.removeEventListener('click', stop);
-			startButton.addEventListener('click', start, false);
-		}
-
-		startButton.addEventListener('click', start, false);
 
 		window.addEventListener('resize', function () {
 			arrowSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight

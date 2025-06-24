@@ -1,5 +1,6 @@
 declare function getDeviceOrientation(options: DeviceOrientationOptions): Promise<DeviceOrientation | null>;
 declare function getDeviceMotion(): Promise<DeviceMotion | null>;
+declare function requestPermission(type?: SensorType): Promise<DevicePermissionState>;
 
 declare class DeviceMotion {
     private state;
@@ -116,7 +117,10 @@ interface ScreenRotation {
     gamma: number;
 }
 type SensorCallback = () => void;
-type PermissionState = 'granted' | 'denied';
+interface DevicePermissionState {
+    orientation?: PermissionState;
+    motion?: PermissionState;
+}
 
-export { DeviceMotion, DeviceOrientation, Euler, Quaternion, RotationMatrix, getDeviceMotion, getDeviceOrientation };
-export type { DeviceOrientationOptions, DeviceOrientationType, DeviceSensorData, DeviceSensorStructure, PermissionState, ScreenAcceleration, ScreenRotation, SensorCallback, SensorType };
+export { DeviceMotion, DeviceOrientation, Euler, Quaternion, RotationMatrix, getDeviceMotion, getDeviceOrientation, requestPermission };
+export type { DeviceOrientationOptions, DeviceOrientationType, DevicePermissionState, DeviceSensorData, DeviceSensorStructure, ScreenAcceleration, ScreenRotation, SensorCallback, SensorType };
