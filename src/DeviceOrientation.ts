@@ -1,7 +1,7 @@
 import {DeviceOrientationOptions, Euler, Quaternion, RotationMatrix, SensorCallback} from "./index";
 import {handleDeviceOrientationChange} from "./Events";
 import {State} from "./State";
-import {M_2_PI} from "./Constants";
+import {M_2_PI, radToDeg} from "./Constants";
 
 export class DeviceOrientation {
 
@@ -19,7 +19,8 @@ export class DeviceOrientation {
 
 		if (options?.type === 'world') {
 			const setCompassAlphaOffset = (evt: DeviceOrientationEvent) => {
-
+				// iOS doesn't provide absolute orientation, so use the non-standard compass values to keep the
+				// deviceorientation values in sync
 				if (!evt.absolute && evt.webkitCompassAccuracy
 					&& +evt.webkitCompassAccuracy >= 0 && +evt.webkitCompassAccuracy < 50) {
 					this.alphaOffsetDevice = new Euler(evt.webkitCompassHeading, 0, 0);
@@ -36,8 +37,17 @@ export class DeviceOrientation {
 				if (++this.tries >= this.maxTries) {
 					window.removeEventListener('deviceorientation', setCompassAlphaOffset, false);
 				}
-			};
+			}
+
 			window.addEventListener('deviceorientation', setCompassAlphaOffset, false);
+
+			// repeat in case of page becoming visible as we may have skipped orientation events while
+			// in the background
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible') {
+					window.addEventListener('deviceorientation', setCompassAlphaOffset, false);
+				}
+			}, false);
 		} else {
 			const setGameAlphaOffset = (evt: DeviceOrientationEvent) => {
 
@@ -66,14 +76,22 @@ export class DeviceOrientation {
 			this.state.sensors.orientation.callbacks.push(callback);
 		}
 		if (!this.state.sensors.orientation.active) {
-			window.addEventListener('deviceorientation', handleDeviceOrientationChange, false);
+			if (window.ondeviceorientationabsolute !== undefined) {
+				window.addEventListener('deviceorientationabsolute', handleDeviceOrientationChange, false);
+			} else {
+				window.addEventListener('deviceorientation', handleDeviceOrientationChange, false);
+			}
 			this.state.sensors.orientation.active = true;
 		}
 	}
 
 	stop(): void {
 		if (this.state.sensors.orientation.active) {
-			window.removeEventListener('deviceorientation', handleDeviceOrientationChange, false);
+			if (window.ondeviceorientationabsolute !== undefined) {
+				window.removeEventListener('deviceorientationabsolute', handleDeviceOrientationChange, false);
+			} else {
+				window.removeEventListener('deviceorientation', handleDeviceOrientationChange, false);
+			}
 			this.state.sensors.orientation.active = false;
 		}
 	}
@@ -157,7 +175,15 @@ export class DeviceOrientation {
 		return euler;
 	}
 
-	getLastRawEventData() {
+	get lastRawEventData() {
 		return this.state.sensors.orientation.data || {};
+	}
+
+	get screenOrientationAngle(): number {
+		return this.state.screenOrientationAngle * radToDeg;
+	}
+
+	get screenOrientationType(): OrientationType {
+		return this.state.screenOrientationType;
 	}
 }

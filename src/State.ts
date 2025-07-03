@@ -1,15 +1,22 @@
 import {DeviceSensorStructure, SensorCallback} from "./index";
 import {degToRad} from "./Constants";
-import {handleScreenOrientationChange} from "./Events";
+import {handleScreenOrientationChange, normalizeOrientationOffset} from "./Events";
+import {wrap} from "./Core";
 
 export class State {
 	private static _instance: State;
 
 	public screenOrientationAngle: number;
+	public screenOrientationType: OrientationType;
 	public sensors: DeviceSensorStructure;
 
 	private constructor() {
-		this.screenOrientationAngle = window.screen.orientation.angle * degToRad
+
+		const [angle, reversed] = normalizeOrientationOffset(screen.orientation);
+		const offset = reversed ? 360 - angle : angle;
+		this.screenOrientationAngle = wrap(screen.orientation.angle + offset, 360) * degToRad;
+		this.screenOrientationType = screen.orientation.type;
+
 
 		this.sensors = {
 			orientation: {
@@ -27,6 +34,7 @@ export class State {
 		if (!window.isSecureContext) {
 			throw new Error('Device Orientation and Motion sensors are only available in a secure context.');
 		}
+
 
 		window.screen.orientation.addEventListener('change', handleScreenOrientationChange, false);
 

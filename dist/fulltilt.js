@@ -20,7 +20,10 @@ const SCREEN_ROTATION_MINUS_90 = -M_PI_2;
 /** @internal */
 function handleScreenOrientationChange() {
     const state = State.instance;
-    state.screenOrientationAngle = (window.screen.orientation.angle || 0) * degToRad;
+    const [angle, reversed] = normalizeOrientationOffset(screen.orientation);
+    const offset = reversed ? -angle : angle;
+    state.screenOrientationAngle = wrap(screen.orientation.angle + offset, 360) * degToRad;
+    state.screenOrientationType = screen.orientation.type;
 }
 /** @internal */
 const handleDeviceOrientationChange = (event) => {
@@ -34,13 +37,46 @@ const handleDeviceMotionChange = (event) => {
     state.sensors.motion.data = event;
     state.sensors.motion.callbacks.forEach(cb => cb());
 };
+/** @internal */
+function normalizeOrientationOffset(orientation) {
+    const platform = navigator.userAgentData?.platform || navigator?.platform || 'unknown';
+    let offset = 0;
+    let reversed = platform === 'iPad' || (platform === 'MacIntel' && navigator.maxTouchPoints > 0);
+    switch (orientation.type) {
+        case "portrait-primary":
+            if (orientation.angle === 90) {
+                offset = 90;
+            }
+            break;
+        case "portrait-secondary":
+            if (orientation.angle === 270) {
+                offset = 90;
+            }
+            break;
+        case "landscape-primary":
+            if (orientation.angle === 0 && reversed) {
+                offset = 270;
+            }
+            break;
+        case "landscape-secondary":
+            if (orientation.angle === 180 && reversed) {
+                offset = 270;
+            }
+            break;
+    }
+    return [offset, reversed];
+}
 
 class State {
     static _instance;
     screenOrientationAngle;
+    screenOrientationType;
     sensors;
     constructor() {
-        this.screenOrientationAngle = window.screen.orientation.angle * degToRad;
+        const [angle, reversed] = normalizeOrientationOffset(screen.orientation);
+        const offset = reversed ? 360 - angle : angle;
+        this.screenOrientationAngle = wrap(screen.orientation.angle + offset, 360) * degToRad;
+        this.screenOrientationType = screen.orientation.type;
         this.sensors = {
             orientation: {
                 active: false,
@@ -82,7 +118,7 @@ async function getDeviceOrientation(options) {
     }
     catch (e) {
         control.stop();
-        console.error('DeviceOrientation is not supported', e);
+        console.error('FullTilt: DeviceOrientation is not supported', e);
         return null;
     }
     return control;
@@ -101,7 +137,7 @@ async function getDeviceMotion() {
     }
     catch (e) {
         control.stop();
-        console.error('DeviceMotion is not supported', e);
+        console.error('FullTilt: DeviceMotion is not supported', e);
         return null;
     }
     return control;
@@ -160,6 +196,13 @@ async function sensorCheck(sensorRootObj) {
         };
         runCheck(0);
     });
+}
+/** @internal */
+function wrap(input, max) {
+    while (input < max) {
+        input += max;
+    }
+    return input % max;
 }
 
 // noinspection JSSuspiciousNameCombination
@@ -285,6 +328,8 @@ class DeviceOrientation {
     constructor(options) {
         if (options?.type === 'world') {
             const setCompassAlphaOffset = (evt) => {
+                // iOS doesn't provide absolute orientation, so use the non-standard compass values to keep the
+                // deviceorientation values in sync
                 if (!evt.absolute && evt.webkitCompassAccuracy
                     && +evt.webkitCompassAccuracy >= 0 && +evt.webkitCompassAccuracy < 50) {
                     this.alphaOffsetDevice = new Euler(evt.webkitCompassHeading, 0, 0);
@@ -301,6 +346,13 @@ class DeviceOrientation {
                 }
             };
             window.addEventListener('deviceorientation', setCompassAlphaOffset, false);
+            // repeat in case of page becoming visible as we may have skipped orientation events while
+            // in the background
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    window.addEventListener('deviceorientation', setCompassAlphaOffset, false);
+                }
+            }, false);
         }
         else {
             const setGameAlphaOffset = (evt) => {
@@ -325,13 +377,23 @@ class DeviceOrientation {
             this.state.sensors.orientation.callbacks.push(callback);
         }
         if (!this.state.sensors.orientation.active) {
-            window.addEventListener('deviceorientation', handleDeviceOrientationChange, false);
+            if (window.ondeviceorientationabsolute !== undefined) {
+                window.addEventListener('deviceorientationabsolute', handleDeviceOrientationChange, false);
+            }
+            else {
+                window.addEventListener('deviceorientation', handleDeviceOrientationChange, false);
+            }
             this.state.sensors.orientation.active = true;
         }
     }
     stop() {
         if (this.state.sensors.orientation.active) {
-            window.removeEventListener('deviceorientation', handleDeviceOrientationChange, false);
+            if (window.ondeviceorientationabsolute !== undefined) {
+                window.removeEventListener('deviceorientationabsolute', handleDeviceOrientationChange, false);
+            }
+            else {
+                window.removeEventListener('deviceorientation', handleDeviceOrientationChange, false);
+            }
             this.state.sensors.orientation.active = false;
         }
     }
@@ -385,8 +447,14 @@ class DeviceOrientation {
         euler.setFromRotationMatrix(matrix);
         return euler;
     }
-    getLastRawEventData() {
+    get lastRawEventData() {
         return this.state.sensors.orientation.data || {};
+    }
+    get screenOrientationAngle() {
+        return this.state.screenOrientationAngle * radToDeg;
+    }
+    get screenOrientationType() {
+        return this.state.screenOrientationType;
     }
 }
 

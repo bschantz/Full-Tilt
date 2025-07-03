@@ -18,7 +18,7 @@ export async function getDeviceOrientation(options: DeviceOrientationOptions) {
 		await sensorCheck(state.sensors.orientation);
 	} catch (e) {
 		control.stop();
-		console.error('DeviceOrientation is not supported', e);
+		console.error('FullTilt: DeviceOrientation is not supported', e);
 		return null;
 	}
 	return control;
@@ -39,7 +39,7 @@ export async function getDeviceMotion() {
 		await sensorCheck(state.sensors.motion);
 	} catch (e) {
 		control.stop();
-		console.error('DeviceMotion is not supported', e);
+		console.error('FullTilt: DeviceMotion is not supported', e);
 		return null;
 	}
 	return control;
@@ -98,4 +98,13 @@ export async function sensorCheck(sensorRootObj: any) {
 		};
 		runCheck(0);
 	});
+}
+
+/** @internal */
+export function wrap(input: number, max: number): number {
+	while (input < max) {
+		input += max;
+	}
+
+	return input % max;
 }

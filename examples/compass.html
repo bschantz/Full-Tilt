@@ -11,13 +11,86 @@
 			padding: 0;
 			margin: 0;
 		}
+
+		#container {
+			display: flex;
+			position: absolute;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			background-color: #90ebff;
+		}
+		#arrow {
+			aspect-ratio: 1 / 1;
+			margin: 24px;
+			background-color: white;
+		}
+		#information {
+			display: flex;
+			flex-grow: 1;
+			flex-wrap: wrap;
+			justify-content: space-evenly;
+			align-items: flex-start;
+
+			margin: 24px;
+			padding: 16px;
+			background-color: white;
+		}
+
+		#information > * {
+			flex: 1 0 auto;
+		}
+
+		#ua {
+			text-wrap: wrap;
+			overflow-wrap: break-word;
+			word-wrap: break-word;
+		}
+
+		@media(orientation: portrait) {
+			#container {
+				flex-direction: column;
+			}
+			#information {
+				flex-direction: row;
+			}
+		}
+
+		@media(orientation: landscape) {
+			#container {
+				flex-direction: row;
+			}
+			#information {
+				flex-direction: column;
+			}
+		}
 	</style>
 	<link rel="stylesheet" href="resources/css/common.css">
 
 </head>
 <body>
 
-	<canvas id="arrow"></canvas>
+	<div id="container">
+		<canvas id="arrow"></canvas>
+		<div id="information">
+			<div id="euler">
+				<p>&alpha;:<span id="euler_alpha"></span></p>
+				<p>&beta;:<span id="euler_beta"></span></p>
+				<p>&gamma;:<span id="euler_gamma"></span></p>
+				<p>absolute:<span id="sensor_absolute"></span></p>
+				<p>compass: <span id="compass"></span></p>
+				<p>accuracy: <span id="accuracy"></span></p>
+			</div>
+			<div id="orientation">
+				<p>Angle: <span id="s_o_angle"></span></p>
+				<p>Adj. Angle: <span id="s_o_adj_angle"></span></p>
+				<p>Type: <span id="s_o_type"></span></p>
+			</div>
+			<div id="ua">
+			</div>
+		</div>
+	</div>
 
 	<dialog id="permission">
 		<div class="dialog-text">
@@ -31,10 +104,10 @@
 	</dialog>
 
 	<script type="module">
-		import {getDeviceOrientation} from "../dist/fulltilt.min.js";
+		import {getDeviceOrientation} from "../dist/fulltilt.js";
 		import {getPermissions} from "./resources/js/permissions.js";
 
-		let arrowSize = window.innerWidth < window.innerHeight ? window.innerWidth : window.innerHeight;
+		let arrowSize = window.innerWidth < window.innerHeight ? window.innerWidth - 250 : window.innerHeight - 400;
 		let halfArrowWidth = arrowSize / 2;
 
 		const arrow = document.getElementById('arrow');
@@ -44,7 +117,18 @@
 		arrow.width = arrowSize;
 		arrow.height = arrowSize;
 
+		const euler_alpha = document.querySelector('#euler_alpha');
+		const euler_beta = document.querySelector('#euler_beta');
+		const euler_gamma = document.querySelector('#euler_gamma');
+		const sensor_absolute = document.querySelector('#sensor_absolute');
+		const compass = document.querySelector('#compass');
+		const accuracy = document.querySelector('#accuracy');
 
+		const s_o_angle = document.querySelector('#s_o_angle');
+		const s_o_adj_angle = document.querySelector('#s_o_adj_angle');
+		const s_o_type = document.querySelector('#s_o_type');
+
+		const ua = document.querySelector('#ua');
 
 		if (await getPermissions('orientation')) {
 			await start();
@@ -61,6 +145,18 @@
 
 				// Get latest screen-adjusted deviceorientation data
 				const screenAdjustedEuler = orientationControl.getScreenAdjustedEuler();
+				euler_alpha.innerText = screenAdjustedEuler.alpha.toFixed(2);
+				euler_beta.innerText = screenAdjustedEuler.beta.toFixed(2);
+				euler_gamma.innerText = screenAdjustedEuler.gamma.toFixed(2);
+				sensor_absolute.innerText = !!orientationControl.lastRawEventData?.absolute;
+				compass.innerText = orientationControl.lastRawEventData?.webkitCompassHeading || 'N/A';
+				accuracy.innerText = orientationControl.lastRawEventData?.webkitCompassAccuracy || 'N/A';
+
+				s_o_angle.innerText = screen.orientation.angle;
+				s_o_adj_angle.innerText = orientationControl.screenOrientationAngle;
+				s_o_type.innerText = orientationControl.screenOrientationType;
+
+				ua.innerText = navigator.userAgentData?.platform || navigator.platform || 'unknown'
 
 				ctx.clearRect(0, 0, arrowSize, arrowSize);
 

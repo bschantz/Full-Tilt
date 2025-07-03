@@ -32,7 +32,9 @@ declare class DeviceOrientation {
     getScreenAdjustedMatrix(): RotationMatrix;
     getFixedFrameEuler(): Euler;
     getScreenAdjustedEuler(): Euler;
-    getLastRawEventData(): any;
+    get lastRawEventData(): any;
+    get screenOrientationAngle(): number;
+    get screenOrientationType(): OrientationType;
 }
 
 declare class Euler {
