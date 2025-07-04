@@ -7,20 +7,32 @@ declare global {
 
 export interface DeviceOrientationOptions {
 	type: DeviceOrientationType;
+	requireLiveData?: boolean;
+}
+
+export interface DeviceMotionOptions {
+	requireLiveData?: boolean;
 }
 
 export type DeviceOrientationType = 'world'|'game';
 export type SensorType = 'orientation'|'motion';
 
 export interface DeviceSensorStructure {
-	orientation: DeviceSensorData;
-	motion: DeviceSensorData;
+	orientation: OrientationSensorData;
+	motion: MotionSensorData;
 }
 
 export interface DeviceSensorData {
 	active: boolean;
 	callbacks: SensorCallback[];
-	data: any;
+}
+
+export interface OrientationSensorData extends DeviceSensorData {
+	data: DeviceOrientationEvent;
+}
+
+export interface MotionSensorData extends DeviceSensorData {
+	data: DeviceMotionEvent;
 }
 
 export interface ScreenAcceleration {

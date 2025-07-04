@@ -114,7 +114,7 @@ async function getDeviceOrientation(options) {
     const control = new DeviceOrientation(options);
     control.start();
     try {
-        await sensorCheck(state.sensors.orientation);
+        await orientationSensorCheck(state.sensors.orientation, options.requireLiveData || false);
     }
     catch (e) {
         control.stop();
@@ -123,7 +123,7 @@ async function getDeviceOrientation(options) {
     }
     return control;
 }
-async function getDeviceMotion() {
+async function getDeviceMotion(options) {
     const state = State.instance;
     // const permission = await requestPermission('motion');
     // if (permission.motion !== 'granted') {
@@ -133,7 +133,7 @@ async function getDeviceMotion() {
     const control = new DeviceMotion();
     control.start();
     try {
-        await sensorCheck(state.sensors.motion);
+        await motionSensorCheck(state.sensors.motion, options.requireLiveData || false);
     }
     catch (e) {
         control.stop();
@@ -179,11 +179,30 @@ async function requestPermission(type) {
     return deviceState;
 }
 /** @internal */
-async function sensorCheck(sensorRootObj) {
+async function orientationSensorCheck(sensorRootObj, requireLiveData = false) {
     return new Promise((resolve, reject) => {
         const runCheck = (tries) => {
             setTimeout(() => {
-                if (sensorRootObj && sensorRootObj.data) {
+                if (sensorRootObj?.data && sensorRootObj.data.alpha || !requireLiveData) {
+                    resolve(null);
+                }
+                else if (tries >= 20) {
+                    reject();
+                }
+                else {
+                    runCheck(++tries);
+                }
+            }, 50);
+        };
+        runCheck(0);
+    });
+}
+/** @internal */
+async function motionSensorCheck(sensorRootObj, requireLiveData = false) {
+    return new Promise((resolve, reject) => {
+        const runCheck = (tries) => {
+            setTimeout(() => {
+                if (sensorRootObj?.data && (sensorRootObj.data.acceleration?.x || !requireLiveData)) {
                     resolve(null);
                 }
                 else if (tries >= 20) {
@@ -231,37 +250,40 @@ class DeviceMotion {
         }
     }
     getScreenAdjustedAcceleration() {
-        const accData = this.state.sensors.motion.data && this.state.sensors.motion.data.acceleration
-            ? this.state.sensors.motion.data.acceleration
-            : { x: 0, y: 0, z: 0 };
+        const accData = {
+            x: this.state.sensors.motion.data?.acceleration?.x || 0,
+            y: this.state.sensors.motion.data?.acceleration?.y || 0,
+            z: this.state.sensors.motion.data?.acceleration?.z || 0,
+        };
         const screenAccData = { x: 0, y: 0, z: 0 };
         switch (this.state.screenOrientationAngle) {
             case SCREEN_ROTATION_90:
-                screenAccData.x = -accData.y;
-                screenAccData.y = accData.x;
+                screenAccData.x = -(accData.y || 0);
+                screenAccData.y = accData.x || 0;
                 break;
             case SCREEN_ROTATION_180:
-                screenAccData.x = -accData.x;
-                screenAccData.y = -accData.y;
+                screenAccData.x = -(accData.x || 0);
+                screenAccData.y = -(accData.y || 0);
                 break;
             case SCREEN_ROTATION_270:
             case SCREEN_ROTATION_MINUS_90:
-                screenAccData.x = accData.y;
-                screenAccData.y = -accData.x;
+                screenAccData.x = accData.y || 0;
+                screenAccData.y = -(accData.x || 0);
                 break;
             default: // SCREEN_ROTATION_0
-                screenAccData.x = accData.x;
-                screenAccData.y = accData.y;
+                screenAccData.x = accData.x || 0;
+                screenAccData.y = accData.y || 0;
                 break;
         }
-        screenAccData.z = accData.z;
+        screenAccData.z = accData.z || 0;
         return screenAccData;
     }
     getScreenAdjustedAccelerationIncludingGravity() {
-        const accGData = this.state.sensors.motion.data
-            && this.state.sensors.motion.data.accelerationIncludingGravity
-            ? this.state.sensors.motion.data.accelerationIncludingGravity
-            : { x: 0, y: 0, z: 0 };
+        const accGData = {
+            x: this.state.sensors.motion.data?.accelerationIncludingGravity?.x || 0,
+            y: this.state.sensors.motion.data?.accelerationIncludingGravity?.y || 0,
+            z: this.state.sensors.motion.data?.accelerationIncludingGravity?.z || 0,
+        };
         const screenAccGData = { x: 0, y: 0, z: 0 };
         switch (screen.orientation.angle) {
             case SCREEN_ROTATION_90:
@@ -286,30 +308,32 @@ class DeviceMotion {
         return screenAccGData;
     }
     getScreenAdjustedRotationRate() {
-        const rotRateData = this.state.sensors.motion.data && this.state.sensors.motion.data.rotationRate
-            ? this.state.sensors.motion.data.rotationRate
-            : { alpha: 0, beta: 0, gamma: 0 };
+        const rotRateData = {
+            alpha: this.state.sensors.motion.data?.rotationRate?.alpha || 0,
+            beta: this.state.sensors.motion.data?.rotationRate?.beta || 0,
+            gamma: this.state.sensors.motion.data?.rotationRate?.gamma || 0,
+        };
         const screenRotRateData = { alpha: 0, beta: 0, gamma: 0 };
         switch (screen.orientation.angle) {
             case SCREEN_ROTATION_90:
-                screenRotRateData.beta = -rotRateData.gamma;
-                screenRotRateData.gamma = rotRateData.beta;
+                screenRotRateData.beta = -(rotRateData.gamma || 0);
+                screenRotRateData.gamma = rotRateData.beta || 0;
                 break;
             case SCREEN_ROTATION_180:
-                screenRotRateData.beta = -rotRateData.beta;
-                screenRotRateData.gamma = -rotRateData.gamma;
+                screenRotRateData.beta = -(rotRateData.beta || 0);
+                screenRotRateData.gamma = -(rotRateData.gamma || 0);
                 break;
             case SCREEN_ROTATION_270:
             case SCREEN_ROTATION_MINUS_90:
-                screenRotRateData.beta = rotRateData.gamma;
-                screenRotRateData.gamma = -rotRateData.beta;
+                screenRotRateData.beta = rotRateData.gamma || 0;
+                screenRotRateData.gamma = -(rotRateData.beta || 0);
                 break;
             default: // SCREEN_ROTATION_0
-                screenRotRateData.beta = rotRateData.beta;
-                screenRotRateData.gamma = rotRateData.gamma;
+                screenRotRateData.beta = rotRateData.beta || 0;
+                screenRotRateData.gamma = rotRateData.gamma || 0;
                 break;
         }
-        screenRotRateData.alpha = rotRateData.alpha;
+        screenRotRateData.alpha = rotRateData.alpha || 0;
         return screenRotRateData;
     }
     getLastRawEventData() {
@@ -428,7 +452,7 @@ class DeviceOrientation {
         const euler = new Euler();
         const matrix = new RotationMatrix();
         const orientationData = this.state.sensors.orientation.data || { alpha: 0, beta: 0, gamma: 0 };
-        let adjustedAlpha = orientationData.alpha;
+        let adjustedAlpha = orientationData.alpha || 0;
         if (this.alphaOffsetDevice) {
             matrix.setFromEuler(this.alphaOffsetDevice);
             matrix.rotateZ(-this.alphaOffsetScreen);
@@ -439,7 +463,7 @@ class DeviceOrientation {
             euler.alpha %= 360;
             adjustedAlpha -= euler.alpha;
         }
-        return euler.set(adjustedAlpha, orientationData.beta, orientationData.gamma);
+        return euler.set(adjustedAlpha, orientationData.beta || 0, orientationData.gamma || 0);
     }
     getScreenAdjustedEuler() {
         const euler = new Euler();

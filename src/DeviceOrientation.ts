@@ -67,8 +67,9 @@ export class DeviceOrientation {
 				}
 			};
 			window.addEventListener('deviceorientation', setGameAlphaOffset, false);
-
 		}
+
+
 	}
 
 	start(callback?: SensorCallback) {
@@ -143,7 +144,7 @@ export class DeviceOrientation {
 
 		const orientationData = this.state.sensors.orientation.data || {alpha: 0, beta: 0, gamma: 0};
 
-		let adjustedAlpha = orientationData.alpha;
+		let adjustedAlpha = orientationData.alpha || 0;
 
 		if (this.alphaOffsetDevice) {
 			matrix.setFromEuler(this.alphaOffsetDevice);
@@ -161,8 +162,8 @@ export class DeviceOrientation {
 
 		return euler.set(
 			adjustedAlpha,
-			orientationData.beta,
-			orientationData.gamma
+			orientationData.beta || 0,
+			orientationData.gamma || 0
 		);
 	}
 

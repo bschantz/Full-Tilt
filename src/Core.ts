@@ -1,4 +1,11 @@
-import {DeviceMotion, DeviceOrientation, DeviceOrientationOptions, DevicePermissionState, SensorType} from "./index";
+import {
+	DeviceMotion, DeviceMotionOptions,
+	DeviceOrientation,
+	DeviceOrientationOptions,
+	DevicePermissionState,
+	MotionSensorData, OrientationSensorData,
+	SensorType
+} from "./index";
 import {State} from "./State";
 
 export async function getDeviceOrientation(options: DeviceOrientationOptions) {
@@ -15,7 +22,7 @@ export async function getDeviceOrientation(options: DeviceOrientationOptions) {
 	control.start();
 
 	try {
-		await sensorCheck(state.sensors.orientation);
+		await orientationSensorCheck(state.sensors.orientation, options.requireLiveData || false);
 	} catch (e) {
 		control.stop();
 		console.error('FullTilt: DeviceOrientation is not supported', e);
@@ -24,7 +31,7 @@ export async function getDeviceOrientation(options: DeviceOrientationOptions) {
 	return control;
 }
 
-export async function getDeviceMotion() {
+export async function getDeviceMotion(options: DeviceMotionOptions) {
 	const state = State.instance;
 
 	// const permission = await requestPermission('motion');
@@ -36,7 +43,7 @@ export async function getDeviceMotion() {
 	control.start();
 
 	try {
-		await sensorCheck(state.sensors.motion);
+		await motionSensorCheck(state.sensors.motion, options.requireLiveData || false);
 	} catch (e) {
 		control.stop();
 		console.error('FullTilt: DeviceMotion is not supported', e);
@@ -81,13 +88,33 @@ export async function requestPermission(type?: SensorType): Promise<DevicePermis
 }
 
 /** @internal */
-export async function sensorCheck(sensorRootObj: any) {
+export async function orientationSensorCheck(sensorRootObj: OrientationSensorData, requireLiveData: boolean = false) {
 
 	return new Promise((resolve, reject) => {
 		const runCheck = (tries: number) => {
 
 			setTimeout(() => {
-				if (sensorRootObj && sensorRootObj.data) {
+				if (sensorRootObj?.data && sensorRootObj.data.alpha || !requireLiveData) {
+					resolve(null);
+				} else if (tries >= 20) {
+					reject();
+				} else {
+					runCheck(++tries);
+				}
+			}, 50);
+		};
+		runCheck(0);
+	});
+}
+
+/** @internal */
+export async function motionSensorCheck(sensorRootObj: MotionSensorData, requireLiveData: boolean = false) {
+
+	return new Promise((resolve, reject) => {
+		const runCheck = (tries: number) => {
+
+			setTimeout(() => {
+				if (sensorRootObj?.data && (sensorRootObj.data.acceleration?.x || !requireLiveData)) {
 					resolve(null);
 				} else if (tries >= 20) {
 					reject();

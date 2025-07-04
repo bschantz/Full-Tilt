@@ -1,5 +1,5 @@
 declare function getDeviceOrientation(options: DeviceOrientationOptions): Promise<DeviceOrientation | null>;
-declare function getDeviceMotion(): Promise<DeviceMotion | null>;
+declare function getDeviceMotion(options: DeviceMotionOptions): Promise<DeviceMotion | null>;
 declare function requestPermission(type?: SensorType): Promise<DevicePermissionState>;
 
 declare class DeviceMotion {
@@ -11,7 +11,7 @@ declare class DeviceMotion {
     getScreenAdjustedAcceleration(): ScreenAcceleration;
     getScreenAdjustedAccelerationIncludingGravity(): ScreenAcceleration;
     getScreenAdjustedRotationRate(): ScreenRotation;
-    getLastRawEventData(): any;
+    getLastRawEventData(): DeviceMotionEvent;
 }
 
 declare class DeviceOrientation {
@@ -32,7 +32,7 @@ declare class DeviceOrientation {
     getScreenAdjustedMatrix(): RotationMatrix;
     getFixedFrameEuler(): Euler;
     getScreenAdjustedEuler(): Euler;
-    get lastRawEventData(): any;
+    get lastRawEventData(): DeviceOrientationEvent;
     get screenOrientationAngle(): number;
     get screenOrientationType(): OrientationType;
 }
@@ -96,17 +96,26 @@ declare global {
 }
 interface DeviceOrientationOptions {
     type: DeviceOrientationType;
+    requireLiveData?: boolean;
+}
+interface DeviceMotionOptions {
+    requireLiveData?: boolean;
 }
 type DeviceOrientationType = 'world' | 'game';
 type SensorType = 'orientation' | 'motion';
 interface DeviceSensorStructure {
-    orientation: DeviceSensorData;
-    motion: DeviceSensorData;
+    orientation: OrientationSensorData;
+    motion: MotionSensorData;
 }
 interface DeviceSensorData {
     active: boolean;
     callbacks: SensorCallback[];
-    data: any;
+}
+interface OrientationSensorData extends DeviceSensorData {
+    data: DeviceOrientationEvent;
+}
+interface MotionSensorData extends DeviceSensorData {
+    data: DeviceMotionEvent;
 }
 interface ScreenAcceleration {
     x: number;
@@ -125,4 +134,4 @@ interface DevicePermissionState {
 }
 
 export { DeviceMotion, DeviceOrientation, Euler, Quaternion, RotationMatrix, getDeviceMotion, getDeviceOrientation, requestPermission };
-export type { DeviceOrientationOptions, DeviceOrientationType, DevicePermissionState, DeviceSensorData, DeviceSensorStructure, ScreenAcceleration, ScreenRotation, SensorCallback, SensorType };
+export type { DeviceMotionOptions, DeviceOrientationOptions, DeviceOrientationType, DevicePermissionState, DeviceSensorData, DeviceSensorStructure, MotionSensorData, OrientationSensorData, ScreenAcceleration, ScreenRotation, SensorCallback, SensorType };
