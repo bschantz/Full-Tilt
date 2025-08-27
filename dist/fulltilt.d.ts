@@ -1,5 +1,5 @@
-declare function getDeviceOrientation(options: DeviceOrientationOptions): Promise<DeviceOrientation | null>;
-declare function getDeviceMotion(options: DeviceMotionOptions): Promise<DeviceMotion | null>;
+declare function getDeviceOrientation(options: DeviceOrientationOptions): Promise<DeviceOrientation>;
+declare function getDeviceMotion(options: DeviceMotionOptions): Promise<DeviceMotion>;
 declare function requestPermission(type?: SensorType): Promise<DevicePermissionState>;
 
 declare class DeviceMotion {

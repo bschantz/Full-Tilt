@@ -1,7 +1,7 @@
 {
 	"name": "fulltilt",
 	"title": "Full Tilt",
-	"version": "2.0.0-alpha2",
+	"version": "2.0.0-alpha3",
 	"type": "module",
 	"description": "Standalone device orientation + device motion normalization and conversion library",
 	"homepage": "https://github.com/bschantz/Full-Tilt",

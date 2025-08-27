@@ -118,8 +118,7 @@ async function getDeviceOrientation(options) {
     }
     catch (e) {
         control.stop();
-        console.error('FullTilt: DeviceOrientation is not supported', e);
-        return null;
+        throw new Error('FullTilt: DeviceOrientation is not supported');
     }
     return control;
 }
@@ -137,8 +136,7 @@ async function getDeviceMotion(options) {
     }
     catch (e) {
         control.stop();
-        console.error('FullTilt: DeviceMotion is not supported', e);
-        return null;
+        throw new Error('FullTilt: DeviceMotion is not supported');
     }
     return control;
 }

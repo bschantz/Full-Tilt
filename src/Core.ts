@@ -25,8 +25,7 @@ export async function getDeviceOrientation(options: DeviceOrientationOptions) {
 		await orientationSensorCheck(state.sensors.orientation, options.requireLiveData || false);
 	} catch (e) {
 		control.stop();
-		console.error('FullTilt: DeviceOrientation is not supported', e);
-		return null;
+		throw new Error('FullTilt: DeviceOrientation is not supported');
 	}
 	return control;
 }
@@ -46,8 +45,7 @@ export async function getDeviceMotion(options: DeviceMotionOptions) {
 		await motionSensorCheck(state.sensors.motion, options.requireLiveData || false);
 	} catch (e) {
 		control.stop();
-		console.error('FullTilt: DeviceMotion is not supported', e);
-		return null;
+		throw new Error('FullTilt: DeviceMotion is not supported');
 	}
 	return control;
 }
